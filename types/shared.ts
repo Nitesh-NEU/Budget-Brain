@@ -1,3 +1,4 @@
+
 export type Channel = "google" | "meta" | "tiktok" | "linkedin";
 
 export type Priors = {
