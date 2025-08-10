@@ -1,3 +1,14 @@
+/**
+ * Budget Brain - AI-Powered Advertising Budget Optimizer
+ * Copyright (c) 2025 [Your Name]. All rights reserved.
+ * 
+ * This file contains proprietary AI integration and data processing logic.
+ * Unauthorized copying, modification, distribution, or commercial use 
+ * is strictly prohibited.
+ * 
+ * See LICENSE file for full terms and conditions.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { ChannelPriorsSchema, PriorsEitherSchema, PriorsResponseSchema } from "@/lib/zod";
@@ -108,14 +119,13 @@ export async function GET(req: NextRequest) {
     });
 
 
-    const text = result.response.text(); // already JSON due to responseSchema
+    const text = result.response.text();
     
     let parsed;
     try {
-      // Remove markdown code blocks if present
       const cleanedText = text
-        .replace(/^```json\s*/i, '') // Remove opening ```json
-        .replace(/```\s*$/, '')      // Remove closing ```
+        .replace(/^```json\s*/i, '') 
+        .replace(/```\s*$/, '') 
         .trim();
       
       parsed = JSON.parse(cleanedText);
@@ -125,7 +135,6 @@ export async function GET(req: NextRequest) {
       throw new Error(`Invalid JSON response from LLM: ${errorMessage}`);
     }
 
-    // Accept mean/std or ranges; normalize to ranges
     const either = PriorsEitherSchema.parse(parsed);
     const priors = ChannelPriorsSchema.parse(normalizePriors(either));
     const citations = sanitizeCitations(parsed.citations);

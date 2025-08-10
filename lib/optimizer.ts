@@ -1,4 +1,14 @@
-// lib/optimizer.ts
+/**
+ * Budget Brain - AI-Powered Advertising Budget Optimizer
+ * Copyright (c) 2025 Nitesh More. All rights reserved.
+ * 
+ * This file contains proprietary Monte Carlo optimization algorithms
+ * and statistical modeling methods. Unauthorized copying, modification,
+ * distribution, or commercial use is strictly prohibited.
+ * 
+ * See LICENSE file for full terms and conditions.
+ */
+
 import type { Allocation, Assumptions, Channel, ChannelPriors } from "@/types/shared";
 
 function sampleUniform(a: number, b: number) {
@@ -22,7 +32,6 @@ function objectiveFromConversions(
   return conversions;
 }
 
-// No generators. Just return an array.
 export function splits10Array(): Allocation[] {
   const arr: Allocation[] = [];
   for (let g = 0; g <= 10; g++) {

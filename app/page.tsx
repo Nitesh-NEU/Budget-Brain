@@ -1,3 +1,14 @@
+/**
+ * Budget Brain - AI-Powered Advertising Budget Optimizer
+ * Copyright (c) 2025 Nitesh More. All rights reserved.
+ * 
+ * This file contains proprietary user interface and application logic.
+ * Unauthorized copying, modification, distribution, or commercial use 
+ * is strictly prohibited.
+ * 
+ * See LICENSE file for full terms and conditions.
+ */
+
 "use client";
 import { useMemo, useState } from "react";
 import type { Assumptions, ChannelPriors, Allocation } from "@/types/shared";

@@ -1,0 +1,39 @@
+NOTICE
+
+Budget Brain - AI-Powered Advertising Budget Optimizer
+Copyright (c) 2025 Nitesh More
+
+This software contains proprietary and confidential information owned by Nitesh More.
+All intellectual property rights, including but not limited to copyrights, patents,
+trade secrets, and trademarks, are reserved.
+
+THIRD-PARTY COMPONENTS:
+This software incorporates the following open-source components:
+- Next.js (MIT License)
+- React (MIT License) 
+- TypeScript (Apache License 2.0)
+- Tailwind CSS (MIT License)
+- Recharts (MIT License)
+- Zod (MIT License)
+- Google Generative AI SDK (Apache License 2.0)
+
+The use of these third-party components does not grant any rights to the proprietary 
+portions of this software.
+
+PROPRIETARY ALGORITHMS:
+The following components contain proprietary algorithms and business logic developed 
+by Nitesh More:
+- Monte Carlo optimization engine
+- Statistical budget allocation methods
+- AI data integration and processing logic
+- User interface design and interaction patterns
+- Business logic and calculation methods
+
+PATENT NOTICE:
+This software may be protected by one or more patents pending or issued.
+
+TRADEMARK NOTICE:
+"Budget Brain" is a trademark of Nitesh More.
+
+For questions regarding this notice or licensing inquiries, contact:
+Nitesh More
