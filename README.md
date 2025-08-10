@@ -2,26 +2,7 @@
 
 **AI-Powered Advertising Budget Optimizer with Monte Carlo Simulation**
 
-*Copyright © 2025 Nitesh More. All rights reserved.*
 
----
-
-## ⚠️ IMPORTANT LEGAL NOTICE
-
-**This software is proprietary and protected by copyright law.**
-
-- ✅ **Allowed:** View source code for educational purposes
-- ✅ **Allowed:** Run locally for personal evaluation
-- ❌ **Prohibited:** Commercial use of any kind
-- ❌ **Prohibited:** Copying algorithms or business logic
-- ❌ **Prohibited:** Distribution or modification
-- ❌ **Prohibited:** Use in production environments
-
-**See [LICENSE](./LICENSE) file for complete terms and conditions.**
-
-For commercial licensing inquiries, contact: [your-email@domain.com]
-
----
 
 ## 🎯 What is Budget Brain?
 
