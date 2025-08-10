@@ -13,7 +13,11 @@ function objectiveFromConversions(
   budget: number,
   avgDealSize?: number
 ) {
-  if (goal === "revenue") return conversions * (avgDealSize ?? 0);
+  if (goal === "revenue") {
+    // Default to $1000 average deal size if not provided
+    const dealSize = avgDealSize ?? 1000;
+    return conversions * dealSize;
+  }
   if (goal === "cac") return budget / Math.max(conversions, 1e-9);
   return conversions;
 }

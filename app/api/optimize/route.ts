@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
       objective: assumptions.goal,
       summary
     });
+
+    
   } catch (e: any) {
     return NextResponse.json({ error: e.message ?? "Bad request" }, { status: 400 });
   }

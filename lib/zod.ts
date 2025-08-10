@@ -1,11 +1,11 @@
 import { z } from "zod";
 
+// Range priors
 export const PriorsSchema = z.object({
   cpm: z.tuple([z.number().positive(), z.number().positive()]),
   ctr: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]),
   cvr: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])
 });
-
 
 export const ChannelPriorsSchema = z.object({
   google: PriorsSchema,
@@ -14,18 +14,29 @@ export const ChannelPriorsSchema = z.object({
   linkedin: PriorsSchema
 });
 
+const MeanStd = z.object({ mean: z.number().min(0), std_dev: z.number().min(0) });
+const ChannelMeanStd = z.object({ cpm: MeanStd, ctr: MeanStd, cvr: MeanStd });
+
+export const PriorsEitherSchema = z.object({
+  google: z.union([PriorsSchema, ChannelMeanStd]),
+  meta: z.union([PriorsSchema, ChannelMeanStd]),
+  tiktok: z.union([PriorsSchema, ChannelMeanStd]),
+  linkedin: z.union([PriorsSchema, ChannelMeanStd]),
+  citations: z.array(z.any()).optional()
+});
 
 export const CitationSchema = z.object({
   title: z.string().optional(),
-  url: z.string().url(),
-  note: z.string().optional()
+  url: z.string().url().optional(),
+  note: z.string().optional(),
+  text: z.string().optional(),
+  id: z.string().optional()
 });
 
 export const PriorsResponseSchema = z.object({
   priors: ChannelPriorsSchema,
   citations: z.array(CitationSchema).optional()
 });
-
 
 export const AssumptionsSchema = z.object({
   goal: z.enum(["demos", "revenue", "cac"]),
@@ -35,7 +46,6 @@ export const AssumptionsSchema = z.object({
   maxPct: z.record(z.string(), z.number().min(0).max(1)).optional()
 });
 
-
 export const OptimizeBodySchema = z.object({
   budget: z.number().positive(),
   priors: ChannelPriorsSchema,
@@ -43,19 +53,11 @@ export const OptimizeBodySchema = z.object({
   runs: z.number().int().min(100).max(5000).optional()
 });
 
-
 export const ModelResultSchema = z.object({
   allocation: z.record(z.string(), z.number().min(0).max(1)),
   detOutcome: z.number().min(0),
-  mc: z.object({
-    p10: z.number().min(0),
-    p50: z.number().min(0),
-    p90: z.number().min(0)
-  }),
-  intervals: z.record(
-    z.string(),
-    z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])
-  ),
+  mc: z.object({ p10: z.number().min(0), p50: z.number().min(0), p90: z.number().min(0) }),
+  intervals: z.record(z.string(), z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])),
   objective: z.enum(["demos", "revenue", "cac"]),
   summary: z.string(),
   citations: z.array(CitationSchema).optional()
