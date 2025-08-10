@@ -172,4 +172,4 @@ See [LICENSE](./LICENSE) for complete terms and conditions.
 
 ---
 
-*Built during [Leo Hackathon] 2025*
+*Built during [ Hackathon ] 2025*

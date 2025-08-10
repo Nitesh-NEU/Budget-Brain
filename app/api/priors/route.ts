@@ -1,6 +1,6 @@
 /**
  * Budget Brain - AI-Powered Advertising Budget Optimizer
- * Copyright (c) 2025 [Your Name]. All rights reserved.
+ * Copyright (c) 2025 Nitesh More. All rights reserved.
  * 
  * This file contains proprietary AI integration and data processing logic.
  * Unauthorized copying, modification, distribution, or commercial use 
