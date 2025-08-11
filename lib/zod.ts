@@ -62,3 +62,53 @@ export const ModelResultSchema = z.object({
   summary: z.string(),
   citations: z.array(CitationSchema).optional()
 });
+
+export const AlgorithmResultSchema = z.object({
+  name: z.string(),
+  allocation: z.record(z.string(), z.number().min(0).max(1)),
+  confidence: z.number().min(0).max(1),
+  performance: z.number().min(0)
+});
+
+export const ConsensusMetricsSchema = z.object({
+  agreement: z.number().min(0).max(1),
+  variance: z.record(z.string(), z.number().min(0)),
+  outlierCount: z.number().int().min(0)
+});
+
+export const ValidationWarningSchema = z.object({
+  type: z.string(),
+  message: z.string(),
+  severity: z.enum(["low", "medium", "high"]),
+  channel: z.enum(["google", "meta", "tiktok", "linkedin"]).optional()
+});
+
+export const BenchmarkAnalysisSchema = z.object({
+  deviationScore: z.number().min(0).max(1),
+  channelDeviations: z.record(z.string(), z.number().min(0)),
+  warnings: z.array(ValidationWarningSchema)
+});
+
+export const StabilityMetricsSchema = z.object({
+  overallStability: z.number().min(0).max(1),
+  channelStability: z.record(z.string(), z.number().min(0).max(1)),
+  convergenceScore: z.number().min(0).max(1)
+});
+
+export const EnhancedModelResultSchema = ModelResultSchema.extend({
+  confidence: z.object({
+    overall: z.number().min(0).max(1),
+    perChannel: z.record(z.string(), z.number().min(0).max(1)),
+    stability: z.number().min(0).max(1)
+  }),
+  validation: z.object({
+    alternativeAlgorithms: z.array(AlgorithmResultSchema),
+    consensus: ConsensusMetricsSchema,
+    benchmarkComparison: BenchmarkAnalysisSchema,
+    warnings: z.array(ValidationWarningSchema)
+  }),
+  alternatives: z.object({
+    topAllocations: z.array(z.record(z.string(), z.number().min(0).max(1))),
+    reasoningExplanation: z.string()
+  })
+});
