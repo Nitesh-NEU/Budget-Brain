@@ -12,8 +12,7 @@ import type {
   ChannelPriors,
   EnhancedModelResult,
   ModelResult,
-  AlgorithmResult,
-  ValidationWarning
+  AlgorithmResult
 } from "@/types/shared";
 
 import { GradientOptimizer } from "./gradientOptimizer";
@@ -21,7 +20,9 @@ import { BayesianOptimizer } from "./bayesianOptimizer";
 import { EnsembleService } from "./ensembleService";
 import { ConfidenceScoring } from "./confidenceScoring";
 import { LLMValidator } from "./llmValidator";
+import { BenchmarkValidator, ValidationContext } from "./benchmarkValidator";
 import { optimize, monteCarloOutcome } from "./optimizer";
+import { PerformanceMonitor, type PerformanceAlert } from "./performanceMonitor";
 
 export interface EnhancementOptions {
   level: 'fast' | 'standard' | 'thorough';
@@ -29,6 +30,9 @@ export interface EnhancementOptions {
   validateAgainstBenchmarks: boolean;
   enableLLMValidation?: boolean;
   timeoutMs?: number;
+  enableCaching?: boolean;
+  maxMemoryUsageMB?: number;
+  maxConcurrentOperations?: number;
 }
 
 export interface ValidationAlgorithmConfig {
@@ -48,18 +52,64 @@ export interface EnhancementConfig {
   maxConcurrency: number;
 }
 
+export interface CacheEntry {
+  key: string;
+  result: EnhancedModelResult;
+  timestamp: number;
+  accessCount: number;
+  lastAccessed: number;
+  memorySize: number;
+}
+
+export interface ResourceUsage {
+  memoryUsageMB: number;
+  activeOperations: number;
+  cacheHitRate: number;
+  averageResponseTime: number;
+  totalRequests: number;
+}
+
+export interface PerformanceMetrics {
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  cacheHit: boolean;
+  memoryUsed: number;
+  operationsCount: number;
+}
+
 export class AccuracyEnhancementService {
   private gradientOptimizer: GradientOptimizer;
   private ensembleService: EnsembleService;
   private confidenceScoring: ConfidenceScoring;
   private llmValidator: LLMValidator;
+  private benchmarkValidator: BenchmarkValidator;
   private config: EnhancementConfig;
+  
+  // Caching and performance monitoring
+  private cache: Map<string, CacheEntry> = new Map();
+  private maxCacheSize: number = 100;
+  private maxCacheAgeMins: number = 60;
+  private maxMemoryUsageMB: number = 256;
+  private activeOperations: number = 0;
+  private maxConcurrentOperations: number = 10;
+  
+  // Performance metrics
+  private totalRequests: number = 0;
+  private cacheHits: number = 0;
+  private responseTimes: number[] = [];
+  private lastCleanup: number = Date.now();
+  private errorCount: number = 0;
+  
+  // Advanced performance monitoring
+  private performanceMonitor: PerformanceMonitor;
 
   constructor(config?: Partial<EnhancementConfig>) {
     this.gradientOptimizer = new GradientOptimizer();
     this.ensembleService = new EnsembleService();
     this.confidenceScoring = new ConfidenceScoring();
     this.llmValidator = new LLMValidator();
+    this.benchmarkValidator = new BenchmarkValidator();
 
     // Default configuration
     this.config = {
@@ -72,6 +122,19 @@ export class AccuracyEnhancementService {
       maxConcurrency: 3,
       ...config
     };
+
+    // Initialize performance monitor
+    this.performanceMonitor = new PerformanceMonitor({
+      memoryUsageMB: this.maxMemoryUsageMB * 0.8, // Alert at 80% of limit
+      averageResponseTimeMs: 5000,
+      errorRatePercent: 5,
+      cacheHitRatePercent: 70,
+      concurrentOperationsCount: this.maxConcurrentOperations * 0.8
+    });
+
+    // Start periodic cleanup and monitoring
+    this.startPeriodicCleanup();
+    this.startPerformanceMonitoring();
   }
 
   /**
@@ -81,10 +144,51 @@ export class AccuracyEnhancementService {
     budget: number,
     priors: ChannelPriors,
     assumptions: Assumptions,
-    options: EnhancementOptions = { level: 'standard', includeAlternatives: true, validateAgainstBenchmarks: true, enableLLMValidation: true }
+    options: EnhancementOptions = { 
+      level: 'standard', 
+      includeAlternatives: true, 
+      validateAgainstBenchmarks: true, 
+      enableLLMValidation: true,
+      enableCaching: true,
+      maxMemoryUsageMB: 256,
+      maxConcurrentOperations: 10
+    }
   ): Promise<EnhancedModelResult> {
-    // Configure enhancement based on level
-    const enhancementConfig = this.getEnhancementConfig(options.level);
+    const startTime = Date.now();
+    this.totalRequests++;
+
+    // Update resource limits from options
+    if (options.maxMemoryUsageMB) {
+      this.maxMemoryUsageMB = options.maxMemoryUsageMB;
+    }
+    if (options.maxConcurrentOperations) {
+      this.maxConcurrentOperations = options.maxConcurrentOperations;
+    }
+
+    // Check resource limits
+    await this.checkResourceLimits();
+
+    // Generate cache key
+    const cacheKey = options.enableCaching !== false 
+      ? this.generateCacheKey(budget, priors, assumptions, options)
+      : null;
+
+    // Check cache first
+    if (cacheKey) {
+      const cachedResult = this.getCachedResult(cacheKey);
+      if (cachedResult) {
+        this.cacheHits++;
+        this.recordResponseTime(Date.now() - startTime);
+        return cachedResult;
+      }
+    }
+
+    // Increment active operations
+    this.activeOperations++;
+
+    try {
+      // Configure enhancement based on level
+      const enhancementConfig = this.getEnhancementConfig(options.level);
 
     // Run primary Monte Carlo optimization
     const primaryResult = this.runPrimaryOptimization(budget, priors, assumptions);
@@ -116,10 +220,31 @@ export class AccuracyEnhancementService {
     // Benchmark comparison (if enabled)
     let benchmarkAnalysis;
     if (options.validateAgainstBenchmarks) {
-      benchmarkAnalysis = this.confidenceScoring.benchmarkComparison(
-        ensembledResult.finalAllocation,
-        priors
-      );
+      try {
+        // Create validation context from assumptions
+        const validationContext: ValidationContext = {
+          budget,
+          assumptions,
+          // Extract industry type from assumptions if available
+          industryType: this.extractIndustryType(assumptions),
+          // Determine company size based on budget
+          companySize: this.determineCompanySize(budget)
+        };
+
+        // Use the dedicated BenchmarkValidator for comprehensive validation
+        benchmarkAnalysis = this.benchmarkValidator.validateAllocation(
+          ensembledResult.finalAllocation,
+          priors,
+          validationContext
+        );
+      } catch (error) {
+        console.warn("Benchmark validation failed:", error);
+        benchmarkAnalysis = {
+          deviationScore: 0,
+          channelDeviations: { google: 0, meta: 0, tiktok: 0, linkedin: 0 },
+          warnings: []
+        };
+      }
     }
 
     // Run LLM validation if enabled
@@ -172,25 +297,41 @@ export class AccuracyEnhancementService {
       ...(llmValidationResult?.warnings || [])
     ];
 
-    // Create enhanced result
-    const enhancedResult: EnhancedModelResult = {
-      ...primaryResult,
-      allocation: ensembledResult.finalAllocation,
-      confidence: confidenceMetrics,
-      validation: {
-        alternativeAlgorithms: validationResults,
-        consensus,
-        benchmarkComparison: benchmarkAnalysis || {
-          deviationScore: 0,
-          channelDeviations: { google: 0, meta: 0, tiktok: 0, linkedin: 0 },
-          warnings: []
+      // Create enhanced result
+      const enhancedResult: EnhancedModelResult = {
+        ...primaryResult,
+        allocation: ensembledResult.finalAllocation,
+        confidence: confidenceMetrics,
+        validation: {
+          alternativeAlgorithms: validationResults,
+          consensus,
+          benchmarkComparison: benchmarkAnalysis || {
+            deviationScore: 0,
+            channelDeviations: { google: 0, meta: 0, tiktok: 0, linkedin: 0 },
+            warnings: []
+          },
+          warnings: allWarnings
         },
-        warnings: allWarnings
-      },
-      alternatives
-    };
+        alternatives
+      };
 
-    return enhancedResult;
+      // Cache the result if caching is enabled
+      if (cacheKey) {
+        this.cacheResult(cacheKey, enhancedResult);
+      }
+
+      // Record performance metrics
+      this.recordResponseTime(Date.now() - startTime);
+
+      return enhancedResult;
+    } catch (error) {
+      // Track errors for performance monitoring
+      this.errorCount++;
+      throw error;
+    } finally {
+      // Decrement active operations
+      this.activeOperations--;
+    }
   }
 
   /**
@@ -507,6 +648,41 @@ export class AccuracyEnhancementService {
   }
 
   /**
+   * Extract industry type from assumptions or other context
+   */
+  private extractIndustryType(assumptions: Assumptions): string | undefined {
+    // For now, we'll use simple heuristics based on goal and other factors
+    // In a real implementation, this could be passed as a parameter or inferred from other data
+    
+    if (assumptions.goal === "cac" && assumptions.targetCAC && assumptions.targetCAC > 500) {
+      return "b2b"; // High CAC typically indicates B2B
+    }
+    
+    if (assumptions.goal === "revenue" && assumptions.avgDealSize && assumptions.avgDealSize < 200) {
+      return "ecommerce"; // Low deal size typically indicates e-commerce
+    }
+    
+    if (assumptions.goal === "demos") {
+      return "saas"; // Demo requests typically indicate SaaS
+    }
+    
+    return undefined; // Use default benchmarks
+  }
+
+  /**
+   * Determine company size based on budget
+   */
+  private determineCompanySize(budget: number): 'small' | 'medium' | 'large' {
+    if (budget < 10000) {
+      return 'small';
+    } else if (budget < 100000) {
+      return 'medium';
+    } else {
+      return 'large';
+    }
+  }
+
+  /**
    * Generate alternative allocations from algorithm results
    */
   private generateAlternatives(
@@ -552,6 +728,555 @@ export class AccuracyEnhancementService {
     return {
       topAllocations,
       reasoningExplanation
+    };
+  }
+
+  /**
+   * Generate cache key for optimization inputs
+   */
+  private generateCacheKey(
+    budget: number,
+    priors: ChannelPriors,
+    assumptions: Assumptions,
+    options: EnhancementOptions
+  ): string {
+    // Create a deterministic hash of the inputs
+    const keyData = {
+      budget: Math.round(budget), // Round to avoid minor floating point differences
+      priors: this.roundPriors(priors),
+      assumptions: this.roundAssumptions(assumptions),
+      level: options.level,
+      includeAlternatives: options.includeAlternatives,
+      validateAgainstBenchmarks: options.validateAgainstBenchmarks,
+      enableLLMValidation: options.enableLLMValidation
+    };
+
+    return this.hashObject(keyData);
+  }
+
+  /**
+   * Round priors to avoid cache misses due to minor floating point differences
+   */
+  private roundPriors(priors: ChannelPriors): ChannelPriors {
+    const roundedPriors: ChannelPriors = {} as ChannelPriors;
+    
+    for (const [channel, channelPriors] of Object.entries(priors)) {
+      roundedPriors[channel as keyof ChannelPriors] = {
+        cpm: [Math.round(channelPriors.cpm[0] * 100) / 100, Math.round(channelPriors.cpm[1] * 100) / 100],
+        ctr: [Math.round(channelPriors.ctr[0] * 10000) / 10000, Math.round(channelPriors.ctr[1] * 10000) / 10000],
+        cvr: [Math.round(channelPriors.cvr[0] * 10000) / 10000, Math.round(channelPriors.cvr[1] * 10000) / 10000]
+      };
+    }
+    
+    return roundedPriors;
+  }
+
+  /**
+   * Round assumptions to avoid cache misses due to minor floating point differences
+   */
+  private roundAssumptions(assumptions: Assumptions): Assumptions {
+    return {
+      ...assumptions,
+      avgDealSize: assumptions.avgDealSize ? Math.round(assumptions.avgDealSize * 100) / 100 : undefined,
+      targetCAC: assumptions.targetCAC ? Math.round(assumptions.targetCAC * 100) / 100 : undefined,
+      minPct: assumptions.minPct ? this.roundAllocation(assumptions.minPct) : undefined,
+      maxPct: assumptions.maxPct ? this.roundAllocation(assumptions.maxPct) : undefined
+    };
+  }
+
+  /**
+   * Round allocation percentages
+   */
+  private roundAllocation(allocation: Partial<Allocation>): Partial<Allocation> {
+    const rounded: Partial<Allocation> = {};
+    for (const [channel, value] of Object.entries(allocation)) {
+      if (value !== undefined) {
+        rounded[channel as keyof Allocation] = Math.round(value * 10000) / 10000;
+      }
+    }
+    return rounded;
+  }
+
+  /**
+   * Simple hash function for objects
+   */
+  private hashObject(obj: any): string {
+    const str = JSON.stringify(obj, Object.keys(obj).sort());
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(36);
+  }
+
+  /**
+   * Get cached result if available and not expired
+   */
+  private getCachedResult(cacheKey: string): EnhancedModelResult | null {
+    const entry = this.cache.get(cacheKey);
+    if (!entry) {
+      return null;
+    }
+
+    const now = Date.now();
+    const ageMinutes = (now - entry.timestamp) / (1000 * 60);
+
+    // Check if cache entry is expired
+    if (ageMinutes > this.maxCacheAgeMins) {
+      this.cache.delete(cacheKey);
+      return null;
+    }
+
+    // Update access statistics
+    entry.accessCount++;
+    entry.lastAccessed = now;
+
+    return entry.result;
+  }
+
+  /**
+   * Cache optimization result
+   */
+  private cacheResult(cacheKey: string, result: EnhancedModelResult): void {
+    const now = Date.now();
+    const memorySize = this.estimateMemorySize(result);
+
+    // Check if adding this entry would exceed memory limit
+    const currentMemoryUsage = this.getCurrentMemoryUsage();
+    if (currentMemoryUsage + memorySize > this.maxMemoryUsageMB * 1024 * 1024) {
+      // Evict least recently used entries to make space
+      this.evictLRUEntries(memorySize);
+    }
+
+    // Add to cache
+    const entry: CacheEntry = {
+      key: cacheKey,
+      result,
+      timestamp: now,
+      accessCount: 1,
+      lastAccessed: now,
+      memorySize
+    };
+
+    this.cache.set(cacheKey, entry);
+
+    // Enforce max cache size
+    if (this.cache.size > this.maxCacheSize) {
+      this.evictOldestEntries();
+    }
+  }
+
+  /**
+   * Estimate memory size of a result object
+   */
+  private estimateMemorySize(result: EnhancedModelResult): number {
+    // Rough estimation based on JSON string length
+    const jsonString = JSON.stringify(result);
+    return jsonString.length * 2; // Assume 2 bytes per character (UTF-16)
+  }
+
+  /**
+   * Get current memory usage of cache
+   */
+  private getCurrentMemoryUsage(): number {
+    let totalSize = 0;
+    for (const entry of this.cache.values()) {
+      totalSize += entry.memorySize;
+    }
+    return totalSize;
+  }
+
+  /**
+   * Evict least recently used entries to free up memory
+   */
+  private evictLRUEntries(requiredSpace: number): void {
+    // Sort entries by last accessed time (oldest first)
+    const entries = Array.from(this.cache.entries()).sort(
+      ([, a], [, b]) => a.lastAccessed - b.lastAccessed
+    );
+
+    let freedSpace = 0;
+    for (const [key, entry] of entries) {
+      this.cache.delete(key);
+      freedSpace += entry.memorySize;
+      
+      if (freedSpace >= requiredSpace) {
+        break;
+      }
+    }
+  }
+
+  /**
+   * Evict oldest entries when cache size limit is exceeded
+   */
+  private evictOldestEntries(): void {
+    // Sort entries by timestamp (oldest first)
+    const entries = Array.from(this.cache.entries()).sort(
+      ([, a], [, b]) => a.timestamp - b.timestamp
+    );
+
+    // Remove oldest entries until we're under the limit
+    const entriesToRemove = this.cache.size - this.maxCacheSize + 1;
+    for (let i = 0; i < entriesToRemove && i < entries.length; i++) {
+      this.cache.delete(entries[i][0]);
+    }
+  }
+
+  /**
+   * Check resource limits and throw error if exceeded
+   */
+  private async checkResourceLimits(): Promise<void> {
+    // Check concurrent operations limit
+    if (this.activeOperations >= this.maxConcurrentOperations) {
+      throw new Error(`Maximum concurrent operations limit reached: ${this.maxConcurrentOperations}`);
+    }
+
+    // Check memory usage
+    const currentMemoryUsage = this.getCurrentMemoryUsage();
+    if (currentMemoryUsage > this.maxMemoryUsageMB * 1024 * 1024 * 0.9) { // 90% threshold
+      // Trigger aggressive cleanup
+      this.evictLRUEntries(currentMemoryUsage * 0.3); // Free up 30% of current usage
+    }
+
+    // Periodic cleanup if needed
+    const now = Date.now();
+    if (now - this.lastCleanup > 5 * 60 * 1000) { // 5 minutes
+      this.performPeriodicCleanup();
+      this.lastCleanup = now;
+    }
+  }
+
+  /**
+   * Record response time for performance metrics
+   */
+  private recordResponseTime(responseTime: number): void {
+    this.responseTimes.push(responseTime);
+    
+    // Keep only last 100 response times
+    if (this.responseTimes.length > 100) {
+      this.responseTimes = this.responseTimes.slice(-100);
+    }
+  }
+
+  /**
+   * Start periodic cleanup process
+   */
+  private startPeriodicCleanup(): void {
+    // Run cleanup every 10 minutes
+    setInterval(() => {
+      this.performPeriodicCleanup();
+    }, 10 * 60 * 1000);
+  }
+
+  /**
+   * Perform periodic cleanup of expired cache entries
+   */
+  private performPeriodicCleanup(): void {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+
+    for (const [key, entry] of this.cache.entries()) {
+      const ageMinutes = (now - entry.timestamp) / (1000 * 60);
+      if (ageMinutes > this.maxCacheAgeMins) {
+        expiredKeys.push(key);
+      }
+    }
+
+    // Remove expired entries
+    for (const key of expiredKeys) {
+      this.cache.delete(key);
+    }
+
+    // Log cleanup results if significant
+    if (expiredKeys.length > 0) {
+      console.log(`Cache cleanup: removed ${expiredKeys.length} expired entries`);
+    }
+  }
+
+  /**
+   * Get current resource usage statistics
+   */
+  public getResourceUsage(): ResourceUsage {
+    const cacheHitRate = this.totalRequests > 0 ? this.cacheHits / this.totalRequests : 0;
+    const averageResponseTime = this.responseTimes.length > 0 
+      ? this.responseTimes.reduce((sum, time) => sum + time, 0) / this.responseTimes.length
+      : 0;
+
+    return {
+      memoryUsageMB: this.getCurrentMemoryUsage() / (1024 * 1024),
+      activeOperations: this.activeOperations,
+      cacheHitRate,
+      averageResponseTime,
+      totalRequests: this.totalRequests
+    };
+  }
+
+  /**
+   * Clear cache manually
+   */
+  public clearCache(): void {
+    this.cache.clear();
+    console.log("Cache cleared manually");
+  }
+
+  /**
+   * Get cache statistics
+   */
+  public getCacheStats(): {
+    size: number;
+    memoryUsageMB: number;
+    hitRate: number;
+    totalRequests: number;
+    entries: Array<{
+      key: string;
+      timestamp: number;
+      accessCount: number;
+      lastAccessed: number;
+      memorySize: number;
+    }>;
+  } {
+    const entries = Array.from(this.cache.values()).map(entry => ({
+      key: entry.key,
+      timestamp: entry.timestamp,
+      accessCount: entry.accessCount,
+      lastAccessed: entry.lastAccessed,
+      memorySize: entry.memorySize
+    }));
+
+    return {
+      size: this.cache.size,
+      memoryUsageMB: this.getCurrentMemoryUsage() / (1024 * 1024),
+      hitRate: this.totalRequests > 0 ? this.cacheHits / this.totalRequests : 0,
+      totalRequests: this.totalRequests,
+      entries
+    };
+  }
+
+  /**
+   * Configure cache settings
+   */
+  public configureCaching(options: {
+    maxCacheSize?: number;
+    maxCacheAgeMins?: number;
+    maxMemoryUsageMB?: number;
+    maxConcurrentOperations?: number;
+  }): void {
+    if (options.maxCacheSize !== undefined) {
+      this.maxCacheSize = options.maxCacheSize;
+    }
+    if (options.maxCacheAgeMins !== undefined) {
+      this.maxCacheAgeMins = options.maxCacheAgeMins;
+    }
+    if (options.maxMemoryUsageMB !== undefined) {
+      this.maxMemoryUsageMB = options.maxMemoryUsageMB;
+      // Update performance monitor thresholds
+      this.performanceMonitor.configureThresholds({
+        memoryUsageMB: this.maxMemoryUsageMB * 0.8
+      });
+    }
+    if (options.maxConcurrentOperations !== undefined) {
+      this.maxConcurrentOperations = options.maxConcurrentOperations;
+      // Update performance monitor thresholds
+      this.performanceMonitor.configureThresholds({
+        concurrentOperationsCount: this.maxConcurrentOperations * 0.8
+      });
+    }
+
+    // Trigger cleanup if new limits are more restrictive
+    this.performPeriodicCleanup();
+    
+    if (this.cache.size > this.maxCacheSize) {
+      this.evictOldestEntries();
+    }
+    
+    const currentMemoryUsage = this.getCurrentMemoryUsage();
+    if (currentMemoryUsage > this.maxMemoryUsageMB * 1024 * 1024) {
+      this.evictLRUEntries(currentMemoryUsage - this.maxMemoryUsageMB * 1024 * 1024);
+    }
+  }
+
+  /**
+   * Start performance monitoring process
+   */
+  private startPerformanceMonitoring(): void {
+    // Monitor performance every 30 seconds
+    setInterval(() => {
+      const resourceUsage = this.getResourceUsage();
+      const alerts = this.performanceMonitor.recordMetrics({
+        memoryUsageMB: resourceUsage.memoryUsageMB,
+        activeOperations: resourceUsage.activeOperations,
+        cacheHitRate: resourceUsage.cacheHitRate,
+        averageResponseTime: resourceUsage.averageResponseTime,
+        totalRequests: resourceUsage.totalRequests,
+        errorCount: this.errorCount
+      });
+
+      // Log critical alerts
+      const criticalAlerts = alerts.filter(alert => alert.severity === 'critical');
+      if (criticalAlerts.length > 0) {
+        console.error('Critical performance alerts:', criticalAlerts);
+      }
+
+      // Log high severity alerts
+      const highAlerts = alerts.filter(alert => alert.severity === 'high');
+      if (highAlerts.length > 0) {
+        console.warn('High severity performance alerts:', highAlerts);
+      }
+    }, 30 * 1000);
+  }
+
+  /**
+   * Get performance alerts
+   */
+  public getPerformanceAlerts(hoursBack: number = 24): PerformanceAlert[] {
+    return this.performanceMonitor.getRecentAlerts(hoursBack);
+  }
+
+  /**
+   * Get performance summary with recommendations
+   */
+  public getPerformanceSummary(): {
+    currentStatus: 'healthy' | 'warning' | 'critical';
+    recentAlerts: number;
+    criticalAlerts: number;
+    trends: any[];
+    recommendations: string[];
+  } {
+    return this.performanceMonitor.getPerformanceSummary();
+  }
+
+  /**
+   * Get performance trends for analysis
+   */
+  public getPerformanceTrends(hoursBack: number = 24): any[] {
+    return this.performanceMonitor.getPerformanceTrends(hoursBack);
+  }
+
+  /**
+   * Configure performance monitoring thresholds
+   */
+  public configurePerformanceThresholds(thresholds: {
+    memoryUsageMB?: number;
+    averageResponseTimeMs?: number;
+    errorRatePercent?: number;
+    cacheHitRatePercent?: number;
+    concurrentOperationsCount?: number;
+  }): void {
+    this.performanceMonitor.configureThresholds(thresholds);
+  }
+
+  /**
+   * Export all performance data for analysis
+   */
+  public exportPerformanceData(): {
+    alerts: PerformanceAlert[];
+    metricsHistory: Record<string, Array<{ value: number; timestamp: number }>>;
+    thresholds: any;
+    resourceUsage: ResourceUsage;
+    cacheStats: any;
+  } {
+    const performanceData = this.performanceMonitor.exportPerformanceData();
+    return {
+      ...performanceData,
+      resourceUsage: this.getResourceUsage(),
+      cacheStats: this.getCacheStats()
+    };
+  }
+
+  /**
+   * Reset performance monitoring data
+   */
+  public resetPerformanceMonitoring(): void {
+    this.performanceMonitor.clearHistory();
+    this.errorCount = 0;
+    this.totalRequests = 0;
+    this.cacheHits = 0;
+    this.responseTimes = [];
+  }
+
+  /**
+   * Get detailed performance report
+   */
+  public getDetailedPerformanceReport(): {
+    summary: any;
+    resourceUsage: ResourceUsage;
+    cacheStats: any;
+    recentAlerts: PerformanceAlert[];
+    trends: any[];
+    recommendations: string[];
+    systemHealth: {
+      score: number; // 0-100
+      status: 'healthy' | 'warning' | 'critical';
+      issues: string[];
+    };
+  } {
+    const summary = this.getPerformanceSummary();
+    const resourceUsage = this.getResourceUsage();
+    const cacheStats = this.getCacheStats();
+    const recentAlerts = this.getPerformanceAlerts(1); // Last hour
+    const trends = this.getPerformanceTrends(24);
+
+    // Calculate system health score
+    let healthScore = 100;
+    const issues: string[] = [];
+
+    // Deduct points for alerts
+    const criticalAlerts = recentAlerts.filter(a => a.severity === 'critical');
+    const highAlerts = recentAlerts.filter(a => a.severity === 'high');
+    const mediumAlerts = recentAlerts.filter(a => a.severity === 'medium');
+
+    healthScore -= criticalAlerts.length * 30;
+    healthScore -= highAlerts.length * 15;
+    healthScore -= mediumAlerts.length * 5;
+
+    if (criticalAlerts.length > 0) {
+      issues.push(`${criticalAlerts.length} critical performance issues`);
+    }
+    if (highAlerts.length > 0) {
+      issues.push(`${highAlerts.length} high severity performance issues`);
+    }
+
+    // Check resource utilization
+    if (resourceUsage.memoryUsageMB > this.maxMemoryUsageMB * 0.9) {
+      healthScore -= 20;
+      issues.push('High memory usage');
+    }
+
+    if (resourceUsage.cacheHitRate < 0.5) {
+      healthScore -= 10;
+      issues.push('Low cache hit rate');
+    }
+
+    if (resourceUsage.averageResponseTime > 10000) {
+      healthScore -= 15;
+      issues.push('Slow response times');
+    }
+
+    healthScore = Math.max(0, Math.min(100, healthScore));
+
+    let status: 'healthy' | 'warning' | 'critical';
+    if (healthScore >= 80) {
+      status = 'healthy';
+    } else if (healthScore >= 60) {
+      status = 'warning';
+    } else {
+      status = 'critical';
+    }
+
+    return {
+      summary,
+      resourceUsage,
+      cacheStats,
+      recentAlerts,
+      trends,
+      recommendations: summary.recommendations,
+      systemHealth: {
+        score: healthScore,
+        status,
+        issues
+      }
     };
   }
 }

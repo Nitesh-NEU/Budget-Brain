@@ -3,6 +3,191 @@ import { OptimizeBodySchema } from "@/lib/zod";
 import { optimize } from "@/lib/optimizer";
 import { AccuracyEnhancementService } from "@/lib/accuracyEnhancementService";
 
+// Global instance for performance monitoring and caching
+let globalEnhancementService: AccuracyEnhancementService | null = null;
+
+function getEnhancementService(): AccuracyEnhancementService {
+  if (!globalEnhancementService) {
+    globalEnhancementService = new AccuracyEnhancementService();
+  }
+  return globalEnhancementService;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const searchParams = req.nextUrl.searchParams;
+    const action = searchParams.get('action');
+
+    if (action === 'stats') {
+      // Return performance and cache statistics
+      const enhancementService = getEnhancementService();
+      const resourceUsage = enhancementService.getResourceUsage();
+      const cacheStats = enhancementService.getCacheStats();
+
+      return NextResponse.json({
+        resourceUsage,
+        cacheStats,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'clear-cache') {
+      // Clear the cache
+      const enhancementService = getEnhancementService();
+      enhancementService.clearCache();
+      
+      return NextResponse.json({
+        message: "Cache cleared successfully",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'configure-cache') {
+      // Configure cache settings
+      const enhancementService = getEnhancementService();
+      const config: any = {};
+      
+      if (searchParams.get('maxCacheSize')) {
+        config.maxCacheSize = parseInt(searchParams.get('maxCacheSize')!);
+      }
+      if (searchParams.get('maxCacheAgeMins')) {
+        config.maxCacheAgeMins = parseInt(searchParams.get('maxCacheAgeMins')!);
+      }
+      if (searchParams.get('maxMemoryUsageMB')) {
+        config.maxMemoryUsageMB = parseInt(searchParams.get('maxMemoryUsageMB')!);
+      }
+      if (searchParams.get('maxConcurrentOperations')) {
+        config.maxConcurrentOperations = parseInt(searchParams.get('maxConcurrentOperations')!);
+      }
+
+      enhancementService.configureCaching(config);
+      
+      return NextResponse.json({
+        message: "Cache configuration updated",
+        config,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'performance-report') {
+      // Get detailed performance report
+      const enhancementService = getEnhancementService();
+      const report = enhancementService.getDetailedPerformanceReport();
+      
+      return NextResponse.json({
+        ...report,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'performance-alerts') {
+      // Get performance alerts
+      const enhancementService = getEnhancementService();
+      const hoursBack = parseInt(searchParams.get('hours') || '24');
+      const alerts = enhancementService.getPerformanceAlerts(hoursBack);
+      
+      return NextResponse.json({
+        alerts,
+        hoursBack,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'performance-trends') {
+      // Get performance trends
+      const enhancementService = getEnhancementService();
+      const hoursBack = parseInt(searchParams.get('hours') || '24');
+      const trends = enhancementService.getPerformanceTrends(hoursBack);
+      
+      return NextResponse.json({
+        trends,
+        hoursBack,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'configure-performance') {
+      // Configure performance monitoring thresholds
+      const enhancementService = getEnhancementService();
+      const thresholds: any = {};
+      
+      if (searchParams.get('memoryUsageMB')) {
+        thresholds.memoryUsageMB = parseInt(searchParams.get('memoryUsageMB')!);
+      }
+      if (searchParams.get('averageResponseTimeMs')) {
+        thresholds.averageResponseTimeMs = parseInt(searchParams.get('averageResponseTimeMs')!);
+      }
+      if (searchParams.get('errorRatePercent')) {
+        thresholds.errorRatePercent = parseInt(searchParams.get('errorRatePercent')!);
+      }
+      if (searchParams.get('cacheHitRatePercent')) {
+        thresholds.cacheHitRatePercent = parseInt(searchParams.get('cacheHitRatePercent')!);
+      }
+      if (searchParams.get('concurrentOperationsCount')) {
+        thresholds.concurrentOperationsCount = parseInt(searchParams.get('concurrentOperationsCount')!);
+      }
+
+      enhancementService.configurePerformanceThresholds(thresholds);
+      
+      return NextResponse.json({
+        message: "Performance thresholds updated",
+        thresholds,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'export-performance') {
+      // Export all performance data
+      const enhancementService = getEnhancementService();
+      const data = enhancementService.exportPerformanceData();
+      
+      return NextResponse.json({
+        ...data,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (action === 'reset-performance') {
+      // Reset performance monitoring data
+      const enhancementService = getEnhancementService();
+      enhancementService.resetPerformanceMonitoring();
+      
+      return NextResponse.json({
+        message: "Performance monitoring data reset",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return NextResponse.json({
+      message: "Optimization API - Performance Monitoring",
+      availableActions: [
+        "stats - Get performance and cache statistics",
+        "clear-cache - Clear the optimization cache",
+        "configure-cache - Configure cache settings",
+        "performance-report - Get detailed performance report",
+        "performance-alerts - Get performance alerts",
+        "performance-trends - Get performance trends",
+        "configure-performance - Configure performance thresholds",
+        "export-performance - Export all performance data",
+        "reset-performance - Reset performance monitoring data"
+      ],
+      usage: {
+        stats: "GET /api/optimize?action=stats",
+        clearCache: "GET /api/optimize?action=clear-cache",
+        configureCache: "GET /api/optimize?action=configure-cache&maxCacheSize=100&maxCacheAgeMins=60&maxMemoryUsageMB=256&maxConcurrentOperations=10",
+        performanceReport: "GET /api/optimize?action=performance-report",
+        performanceAlerts: "GET /api/optimize?action=performance-alerts&hours=24",
+        performanceTrends: "GET /api/optimize?action=performance-trends&hours=24",
+        configurePerformance: "GET /api/optimize?action=configure-performance&memoryUsageMB=200&averageResponseTimeMs=5000&errorRatePercent=5&cacheHitRatePercent=70&concurrentOperationsCount=8",
+        exportPerformance: "GET /api/optimize?action=export-performance",
+        resetPerformance: "GET /api/optimize?action=reset-performance"
+      }
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? "Bad request" }, { status: 400 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -25,8 +210,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (useEnhancedOptimization) {
-      // Use the new AccuracyEnhancementService for better results
-      const enhancementService = new AccuracyEnhancementService();
+      // Use the global AccuracyEnhancementService for better results and caching
+      const enhancementService = getEnhancementService();
       
       const enhancedResult = await enhancementService.enhanceOptimization(
         budget,
@@ -36,7 +221,11 @@ export async function POST(req: NextRequest) {
           level: enhancementLevel || 'standard',
           includeAlternatives,
           validateAgainstBenchmarks: validateBenchmarks,
-          enableLLMValidation
+          enableLLMValidation,
+          enableCaching: searchParams.get('cache') !== 'false',
+          timeoutMs: searchParams.get('timeout') ? parseInt(searchParams.get('timeout')!) : undefined,
+          maxMemoryUsageMB: searchParams.get('maxMemory') ? parseInt(searchParams.get('maxMemory')!) : undefined,
+          maxConcurrentOperations: searchParams.get('maxConcurrent') ? parseInt(searchParams.get('maxConcurrent')!) : undefined
         }
       );
 

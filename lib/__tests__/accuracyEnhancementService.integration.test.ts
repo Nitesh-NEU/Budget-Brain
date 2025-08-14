@@ -272,6 +272,195 @@ describe("AccuracyEnhancementService Integration Tests", () => {
       // Should generate warnings about constraint conflicts
       expect(result.validation.warnings.length).toBeGreaterThan(0);
     });
+
+    it("should handle individual algorithm failures gracefully", async () => {
+      const budget = 20000;
+      const priors: ChannelPriors = {
+        google: { cpm: [12, 22], ctr: [0.025, 0.045], cvr: [0.12, 0.28] },
+        meta: { cpm: [10, 18], ctr: [0.02, 0.04], cvr: [0.1, 0.25] },
+        tiktok: { cpm: [14, 24], ctr: [0.03, 0.05], cvr: [0.08, 0.22] },
+        linkedin: { cpm: [18, 32], ctr: [0.015, 0.03], cvr: [0.15, 0.35] }
+      };
+
+      const assumptions: Assumptions = {
+        goal: "revenue",
+        avgDealSize: 2500
+      };
+
+      // Mock one of the algorithms to fail
+      const originalGradientOptimize = service['gradientOptimizer'].optimize;
+      service['gradientOptimizer'].optimize = jest.fn().mockImplementation(() => {
+        throw new Error("Gradient algorithm failed");
+      });
+
+      const result = await service.enhanceOptimization(budget, priors, assumptions, {
+        level: "standard",
+        includeAlternatives: true,
+        validateAgainstBenchmarks: true
+      });
+
+      // Should still return a valid result despite algorithm failure
+      expect(result).toHaveProperty("allocation");
+      expect(result).toHaveProperty("confidence");
+
+      // Allocation should still be valid
+      const allocationSum = Object.values(result.allocation).reduce((sum, val) => sum + val, 0);
+      expect(allocationSum).toBeCloseTo(1, 5);
+
+      // Should have fewer validation algorithms due to failure
+      expect(result.validation.alternativeAlgorithms.length).toBeLessThan(3);
+
+      // Confidence might be lower due to fewer algorithms
+      expect(result.confidence.overall).toBeGreaterThan(0);
+
+      // Restore original method
+      service['gradientOptimizer'].optimize = originalGradientOptimize;
+    });
+
+    it("should handle LLM validation failures gracefully", async () => {
+      const budget = 15000;
+      const priors: ChannelPriors = {
+        google: { cpm: [10, 18], ctr: [0.02, 0.04], cvr: [0.1, 0.25] },
+        meta: { cpm: [8, 16], ctr: [0.018, 0.038], cvr: [0.08, 0.22] },
+        tiktok: { cpm: [12, 22], ctr: [0.025, 0.045], cvr: [0.06, 0.18] },
+        linkedin: { cpm: [16, 28], ctr: [0.012, 0.025], cvr: [0.12, 0.3] }
+      };
+
+      const assumptions: Assumptions = {
+        goal: "cac",
+        targetCAC: 180
+      };
+
+      // Mock LLM validator to fail
+      const originalValidateAllocation = service['llmValidator'].validateAllocation;
+      service['llmValidator'].validateAllocation = jest.fn().mockRejectedValue(new Error("LLM API failed"));
+
+      const result = await service.enhanceOptimization(budget, priors, assumptions, {
+        level: "standard",
+        includeAlternatives: true,
+        validateAgainstBenchmarks: true,
+        enableLLMValidation: true
+      });
+
+      // Should still return a valid result despite LLM failure
+      expect(result).toHaveProperty("allocation");
+      expect(result).toHaveProperty("confidence");
+
+      // Allocation should still be valid
+      const allocationSum = Object.values(result.allocation).reduce((sum, val) => sum + val, 0);
+      expect(allocationSum).toBeCloseTo(1, 5);
+
+      // Should have other validation algorithms working
+      expect(result.validation.alternativeAlgorithms.length).toBeGreaterThan(0);
+
+      // Should still have confidence scoring
+      expect(result.confidence.overall).toBeGreaterThan(0);
+
+      // Restore original method
+      service['llmValidator'].validateAllocation = originalValidateAllocation;
+    });
+
+    it("should handle benchmark validation failures gracefully", async () => {
+      const budget = 25000;
+      const priors: ChannelPriors = {
+        google: { cpm: [15, 25], ctr: [0.03, 0.05], cvr: [0.15, 0.35] },
+        meta: { cpm: [12, 20], ctr: [0.025, 0.045], cvr: [0.12, 0.3] },
+        tiktok: { cpm: [18, 28], ctr: [0.035, 0.055], cvr: [0.08, 0.25] },
+        linkedin: { cpm: [22, 38], ctr: [0.018, 0.035], cvr: [0.18, 0.45] }
+      };
+
+      const assumptions: Assumptions = {
+        goal: "demos",
+        avgDealSize: 1200
+      };
+
+      // Mock benchmark validator to fail
+      const originalValidateAllocation = service['benchmarkValidator'].validateAllocation;
+      service['benchmarkValidator'].validateAllocation = jest.fn().mockImplementation(() => {
+        throw new Error("Benchmark validation failed");
+      });
+
+      const result = await service.enhanceOptimization(budget, priors, assumptions, {
+        level: "thorough",
+        includeAlternatives: true,
+        validateAgainstBenchmarks: true
+      });
+
+      // Should still return a valid result despite benchmark validation failure
+      expect(result).toHaveProperty("allocation");
+      expect(result).toHaveProperty("confidence");
+
+      // Allocation should still be valid
+      const allocationSum = Object.values(result.allocation).reduce((sum, val) => sum + val, 0);
+      expect(allocationSum).toBeCloseTo(1, 5);
+
+      // Should have default benchmark comparison structure
+      expect(result.validation.benchmarkComparison).toBeDefined();
+      expect(result.validation.benchmarkComparison.deviationScore).toBe(0);
+
+      // Should still have other validation algorithms working
+      expect(result.validation.alternativeAlgorithms.length).toBeGreaterThan(0);
+
+      // Restore original method
+      service['benchmarkValidator'].validateAllocation = originalValidateAllocation;
+    });
+
+    it("should handle complete validation pipeline failure", async () => {
+      const budget = 8000;
+      const priors: ChannelPriors = {
+        google: { cpm: [8, 16], ctr: [0.015, 0.035], cvr: [0.08, 0.2] },
+        meta: { cpm: [6, 14], ctr: [0.012, 0.032], cvr: [0.06, 0.18] },
+        tiktok: { cpm: [10, 20], ctr: [0.02, 0.04], cvr: [0.04, 0.15] },
+        linkedin: { cpm: [14, 26], ctr: [0.008, 0.02], cvr: [0.1, 0.25] }
+      };
+
+      const assumptions: Assumptions = {
+        goal: "revenue",
+        avgDealSize: 800
+      };
+
+      // Mock all validation components to fail
+      const originalGradientOptimize = service['gradientOptimizer'].optimize;
+      const originalLLMValidate = service['llmValidator'].validateAllocation;
+      const originalBenchmarkValidate = service['benchmarkValidator'].validateAllocation;
+
+      service['gradientOptimizer'].optimize = jest.fn().mockImplementation(() => {
+        throw new Error("Gradient failed");
+      });
+      service['llmValidator'].validateAllocation = jest.fn().mockRejectedValue(new Error("LLM failed"));
+      service['benchmarkValidator'].validateAllocation = jest.fn().mockImplementation(() => {
+        throw new Error("Benchmark failed");
+      });
+
+      const result = await service.enhanceOptimization(budget, priors, assumptions, {
+        level: "fast",
+        includeAlternatives: true,
+        validateAgainstBenchmarks: true,
+        enableLLMValidation: true
+      });
+
+      // Should still return a valid result with just Monte Carlo
+      expect(result).toHaveProperty("allocation");
+      expect(result).toHaveProperty("confidence");
+
+      // Allocation should still be valid
+      const allocationSum = Object.values(result.allocation).reduce((sum, val) => sum + val, 0);
+      expect(allocationSum).toBeCloseTo(1, 5);
+
+      // Should have minimal validation results
+      expect(result.validation.alternativeAlgorithms.length).toBe(0);
+
+      // Should still have some confidence from Monte Carlo
+      expect(result.confidence.overall).toBeGreaterThan(0);
+
+      // Should have default structures for failed components
+      expect(result.validation.benchmarkComparison).toBeDefined();
+
+      // Restore original methods
+      service['gradientOptimizer'].optimize = originalGradientOptimize;
+      service['llmValidator'].validateAllocation = originalLLMValidate;
+      service['benchmarkValidator'].validateAllocation = originalBenchmarkValidate;
+    });
   });
 
   describe("Validation quality assessment", () => {
