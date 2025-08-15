@@ -626,7 +626,18 @@ export class AccuracyEnhancementService {
       mc,
       intervals: result.intervals,
       objective: assumptions.goal,
-      summary: `Optimized for ${assumptions.goal} with ${budget} budget`,
+      summary: (() => {
+        switch(assumptions.goal) {
+          case 'revenue':
+            return `Revenue-optimized allocation for $${budget.toLocaleString()} budget - maximizing return on ad spend through high-value customer targeting`;
+          case 'demos':
+            return `Lead generation-optimized allocation for $${budget.toLocaleString()} budget - maximizing qualified demo requests and conversions`;
+          case 'cac':
+            return `Cost-optimized allocation for $${budget.toLocaleString()} budget - minimizing customer acquisition cost while maintaining quality`;
+          default:
+            return `Optimized for ${assumptions.goal} with $${budget.toLocaleString()} budget`;
+        }
+      })(),
       citations: []
     };
   }
