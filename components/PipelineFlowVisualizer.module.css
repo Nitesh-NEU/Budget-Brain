@@ -1,0 +1,194 @@
+/* PipelineFlowVisualizer Styles */
+
+.pipelineContainer {
+  position: relative;
+}
+
+.stageCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.stageCard:hover {
+  transform: translateY(-2px);
+}
+
+.stageCard.selected {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.progressBar {
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.progressFill {
+  transition: width 0.3s ease-out;
+  border-radius: 9999px;
+}
+
+.connector {
+  position: relative;
+}
+
+.connector::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
+.pulseAnimation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .pipelineContainer {
+    padding: 12px;
+  }
+  
+  .stageCard {
+    min-width: 50px;
+    padding: 6px;
+    min-height: 44px; /* Touch-friendly minimum */
+  }
+  
+  .stageName {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  
+  .connector {
+    padding: 0 2px;
+  }
+  
+  .stageDetails {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .stageDetailsOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .stageCard {
+    min-width: 70px;
+    padding: 10px;
+  }
+  
+  .stageName {
+    font-size: 11px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .stageCard {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .stageCard:hover {
+    transform: none;
+  }
+  
+  .stageCard:active {
+    transform: scale(0.95);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .stageCard {
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+  
+  .progressBar {
+    background-color: rgba(75, 85, 99, 0.3);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .stageCard {
+    border-width: 3px;
+  }
+  
+  .progressBar {
+    height: 4px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stageCard,
+  .progressFill,
+  .slideIn,
+  .fadeIn {
+    animation: none;
+    transition: none;
+  }
+  
+  .pulseAnimation {
+    animation: none;
+  }
+}

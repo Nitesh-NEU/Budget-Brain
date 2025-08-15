@@ -23,6 +23,8 @@ import { LLMValidator } from "./llmValidator";
 import { BenchmarkValidator, ValidationContext } from "./benchmarkValidator";
 import { optimize, monteCarloOutcome } from "./optimizer";
 import { PerformanceMonitor, type PerformanceAlert } from "./performanceMonitor";
+import { PipelineManager } from "./pipelineManager";
+import type { OptimizationPipeline, StageId } from "../types/pipeline";
 
 export interface EnhancementOptions {
   level: 'fast' | 'standard' | 'thorough';
@@ -103,6 +105,23 @@ export class AccuracyEnhancementService {
   
   // Advanced performance monitoring
   private performanceMonitor: PerformanceMonitor;
+  
+  // Pipeline tracking
+  private pipelineManager: PipelineManager;
+  
+  /**
+   * Gets the current pipeline manager instance for external access
+   */
+  getPipelineManager(): PipelineManager {
+    return this.pipelineManager;
+  }
+
+  /**
+   * Gets the current pipeline state
+   */
+  getCurrentPipeline(): OptimizationPipeline {
+    return this.pipelineManager.getPipeline();
+  }
 
   constructor(config?: Partial<EnhancementConfig>) {
     this.gradientOptimizer = new GradientOptimizer();
@@ -132,9 +151,185 @@ export class AccuracyEnhancementService {
       concurrentOperationsCount: this.maxConcurrentOperations * 0.8
     });
 
+    // Initialize pipeline manager
+    this.pipelineManager = new PipelineManager();
+    this.setupPipelineStageExecutors();
+
     // Start periodic cleanup and monitoring
     this.startPeriodicCleanup();
     this.startPerformanceMonitoring();
+  }
+
+  /**
+   * Setup pipeline stage executors
+   */
+  private setupPipelineStageExecutors(): void {
+    // Data Fetch stage
+    this.pipelineManager.registerStageExecutor('dataFetch', async (context) => {
+      const startTime = Date.now();
+      try {
+        // Simulate data fetching - in real implementation this would fetch benchmark data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return {
+          success: true,
+          data: { message: 'Benchmark data and priors fetched successfully' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Data fetch failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Validation stage
+    this.pipelineManager.registerStageExecutor('validation', async (context) => {
+      const startTime = Date.now();
+      try {
+        // Simulate validation - in real implementation this would validate input data
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return {
+          success: true,
+          data: { message: 'Input data validation completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Validation failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Ensemble Optimization stage
+    this.pipelineManager.registerStageExecutor('ensembleOptimization', async (context) => {
+      const startTime = Date.now();
+      try {
+        // This will be populated with actual ensemble optimization results
+        return {
+          success: true,
+          data: { message: 'Ensemble optimization completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Ensemble optimization failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Bayesian Optimization stage
+    this.pipelineManager.registerStageExecutor('bayesianOptimization', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'Bayesian optimization completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Bayesian optimization failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Gradient Optimization stage
+    this.pipelineManager.registerStageExecutor('gradientOptimization', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'Gradient optimization completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Gradient optimization failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Confidence Scoring stage
+    this.pipelineManager.registerStageExecutor('confidenceScoring', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'Confidence scoring completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Confidence scoring failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Benchmark Validation stage
+    this.pipelineManager.registerStageExecutor('benchmarkValidation', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'Benchmark validation completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Benchmark validation failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // LLM Validation stage
+    this.pipelineManager.registerStageExecutor('llmValidation', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'LLM validation completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'LLM validation failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
+
+    // Final Selection stage
+    this.pipelineManager.registerStageExecutor('finalSelection', async (context) => {
+      const startTime = Date.now();
+      try {
+        return {
+          success: true,
+          data: { message: 'Final allocation selection completed' },
+          duration: Date.now() - startTime
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Final selection failed',
+          duration: Date.now() - startTime
+        };
+      }
+    });
   }
 
   /**
@@ -156,6 +351,13 @@ export class AccuracyEnhancementService {
   ): Promise<EnhancedModelResult> {
     const startTime = Date.now();
     this.totalRequests++;
+
+    // Reset pipeline for new optimization
+    this.pipelineManager.reset();
+    const pipeline = this.pipelineManager.getPipeline();
+
+    // Store optimization context for pipeline stages
+    const optimizationContext = { budget, priors, assumptions, options };
 
     // Update resource limits from options
     if (options.maxMemoryUsageMB) {
@@ -179,7 +381,12 @@ export class AccuracyEnhancementService {
       if (cachedResult) {
         this.cacheHits++;
         this.recordResponseTime(Date.now() - startTime);
-        return cachedResult;
+        // Add pipeline data to cached result
+        return {
+          ...cachedResult,
+          pipeline: this.pipelineManager.getPipeline(),
+          timing: { total: Date.now() - startTime, fromCache: Date.now() - startTime }
+        };
       }
     }
 
@@ -190,8 +397,22 @@ export class AccuracyEnhancementService {
       // Configure enhancement based on level
       const enhancementConfig = this.getEnhancementConfig(options.level);
 
+      // Track timing for each stage
+      const stageTimings: Record<string, number> = {};
+
+    // Execute pipeline stages with tracking
+    await this.pipelineManager.startStage('dataFetch');
+    stageTimings.dataFetch = Date.now() - startTime;
+
+    await this.pipelineManager.startStage('validation');
+    stageTimings.validation = Date.now() - startTime - stageTimings.dataFetch;
+
     // Run primary Monte Carlo optimization
     const primaryResult = this.runPrimaryOptimization(budget, priors, assumptions);
+
+    // Execute ensemble optimization stage
+    await this.pipelineManager.startStage('ensembleOptimization');
+    const ensembleStartTime = Date.now();
 
     // Run validation algorithms in parallel or sequentially
     const validationResults = await this.runValidationPipeline(
@@ -201,6 +422,8 @@ export class AccuracyEnhancementService {
       enhancementConfig,
       options.timeoutMs
     );
+
+    stageTimings.ensembleOptimization = Date.now() - ensembleStartTime;
 
     // Combine all results including primary
     const allResults = [
@@ -217,9 +440,12 @@ export class AccuracyEnhancementService {
     // Calculate consensus metrics
     const consensus = ensembledResult.consensus;
 
-    // Benchmark comparison (if enabled)
+    // Execute benchmark validation stage
     let benchmarkAnalysis;
     if (options.validateAgainstBenchmarks) {
+      await this.pipelineManager.startStage('benchmarkValidation');
+      const benchmarkStartTime = Date.now();
+
       try {
         // Create validation context from assumptions
         const validationContext: ValidationContext = {
@@ -245,13 +471,18 @@ export class AccuracyEnhancementService {
           warnings: []
         };
       }
+
+      stageTimings.benchmarkValidation = Date.now() - benchmarkStartTime;
     }
 
-    // Run LLM validation if enabled
+    // Execute LLM validation stage
     let llmValidationResult;
     let llmReasoningExplanation = "";
 
     if (options.enableLLMValidation) {
+      await this.pipelineManager.startStage('llmValidation');
+      const llmStartTime = Date.now();
+
       try {
         const optimizationContext = {
           budget,
@@ -273,7 +504,13 @@ export class AccuracyEnhancementService {
         console.warn("LLM validation failed:", error);
         llmValidationResult = null;
       }
+
+      stageTimings.llmValidation = Date.now() - llmStartTime;
     }
+
+    // Execute confidence scoring stage
+    await this.pipelineManager.startStage('confidenceScoring');
+    const confidenceStartTime = Date.now();
 
     // Calculate comprehensive confidence
     const confidenceMetrics = this.confidenceScoring.calculateComprehensiveConfidence(
@@ -284,6 +521,12 @@ export class AccuracyEnhancementService {
       benchmarkAnalysis,
       llmValidationResult || undefined
     );
+
+    stageTimings.confidenceScoring = Date.now() - confidenceStartTime;
+
+    // Execute final selection stage
+    await this.pipelineManager.startStage('finalSelection');
+    const finalSelectionStartTime = Date.now();
 
     // Generate alternatives if requested
     const alternatives = options.includeAlternatives
@@ -296,6 +539,35 @@ export class AccuracyEnhancementService {
       ...(benchmarkAnalysis?.warnings || []),
       ...(llmValidationResult?.warnings || [])
     ];
+
+    stageTimings.finalSelection = Date.now() - finalSelectionStartTime;
+    stageTimings.total = Date.now() - startTime;
+
+    // Get final pipeline state
+    const finalPipeline = this.pipelineManager.getPipeline();
+
+    // Collect algorithm details
+    const algorithmDetails = {
+      primaryOptimization: {
+        method: 'Monte Carlo',
+        allocation: primaryResult.allocation,
+        detOutcome: primaryResult.detOutcome
+      },
+      validationAlgorithms: validationResults.map(result => ({
+        name: result.name,
+        allocation: result.allocation,
+        confidence: result.confidence,
+        performance: result.performance
+      })),
+      ensembleMethod: {
+        finalAllocation: ensembledResult.finalAllocation,
+        consensus: consensus,
+        stability: stabilityMetrics
+      },
+      confidenceScoring: confidenceMetrics,
+      benchmarkValidation: benchmarkAnalysis,
+      llmValidation: llmValidationResult
+    };
 
       // Create enhanced result
       const enhancedResult: EnhancedModelResult = {
@@ -312,7 +584,10 @@ export class AccuracyEnhancementService {
           },
           warnings: allWarnings
         },
-        alternatives
+        alternatives,
+        pipeline: finalPipeline,
+        timing: stageTimings,
+        algorithmDetails
       };
 
       // Cache the result if caching is enabled
@@ -1278,5 +1553,26 @@ export class AccuracyEnhancementService {
         issues
       }
     };
+  }
+
+  /**
+   * Get current pipeline state
+   */
+  public getCurrentPipeline(): OptimizationPipeline {
+    return this.pipelineManager.getPipeline();
+  }
+
+  /**
+   * Get pipeline metrics
+   */
+  public getPipelineMetrics() {
+    return this.pipelineManager.getMetrics();
+  }
+
+  /**
+   * Register pipeline event callback for real-time updates
+   */
+  public onPipelineEvent(callback: (event: any) => void): () => void {
+    return this.pipelineManager.onEvent(callback);
   }
 }

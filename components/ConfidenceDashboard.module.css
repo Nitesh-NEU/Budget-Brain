@@ -1,0 +1,338 @@
+/* ConfidenceDashboard Styles */
+
+.dashboardContainer {
+  position: relative;
+}
+
+.confidenceCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.confidenceCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.circularProgress {
+  transition: all 0.5s ease-out;
+}
+
+.algorithmBadge {
+  transition: all 0.2s ease-in-out;
+}
+
+.algorithmBadge:hover {
+  transform: translateY(-1px);
+}
+
+.algorithmBadge.selected {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.channelCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.channelCard:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.expandedContent {
+  animation: slideDown 0.3s ease-out;
+}
+
+.consensusIndicator {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.progressRing {
+  transform-origin: center;
+  transition: stroke-dashoffset 0.5s ease-out;
+}
+
+.fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Confidence level color indicators */
+.confidenceHigh {
+  color: #10B981;
+}
+
+.confidenceMedium {
+  color: #F59E0B;
+}
+
+.confidenceLow {
+  color: #EF4444;
+}
+
+.confidenceVeryLow {
+  color: #6B7280;
+}
+
+/* Algorithm-specific colors */
+.algorithmEnsemble {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #1D4ED8;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.algorithmBayesian {
+  background-color: rgba(147, 51, 234, 0.1);
+  color: #7C3AED;
+  border-color: rgba(147, 51, 234, 0.2);
+}
+
+.algorithmGradient {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.algorithmLlm {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.algorithmBenchmark {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: #374151;
+  border-color: rgba(107, 114, 128, 0.2);
+}
+
+/* Channel-specific styling */
+.channelGoogle {
+  border-left: 4px solid #4285F4;
+}
+
+.channelMeta {
+  border-left: 4px solid #1877F2;
+}
+
+.channelTiktok {
+  border-left: 4px solid #000000;
+}
+
+.channelLinkedin {
+  border-left: 4px solid #0A66C2;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 12px;
+  }
+  
+  .confidenceCard {
+    padding: 12px;
+  }
+  
+  .algorithmBadge {
+    font-size: 10px;
+    padding: 6px 10px;
+    min-height: 32px;
+    min-width: 44px; /* Touch-friendly minimum */
+  }
+  
+  .circularProgress {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .channelCard {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .channelGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .overallConfidence {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .algorithmGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .expandedPanel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .expandedPanelOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .confidenceCard {
+    padding: 16px;
+  }
+  
+  .channelGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .algorithmBadge {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .algorithmBadge,
+  .channelCard button,
+  .expandButton {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .algorithmBadge:hover,
+  .channelCard:hover {
+    transform: none;
+  }
+  
+  .algorithmBadge:active {
+    transform: scale(0.95);
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  
+  .channelCard:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .confidenceCard {
+    border-color: rgba(75, 85, 99, 0.3);
+    background-color: rgba(31, 41, 55, 1);
+  }
+  
+  .algorithmBadge {
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+  
+  .consensusIndicator {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .confidenceCard {
+    border-width: 2px;
+  }
+  
+  .algorithmBadge {
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .circularProgress {
+    stroke-width: 4px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .confidenceCard,
+  .algorithmBadge,
+  .channelCard,
+  .circularProgress,
+  .progressRing,
+  .expandedContent,
+  .fadeIn,
+  .slideUp {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.algorithmBadge:focus,
+.channelCard:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

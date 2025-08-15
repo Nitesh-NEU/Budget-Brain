@@ -1,0 +1,540 @@
+/* AlternativeOptionsExplorer Styles */
+
+.explorerContainer {
+  position: relative;
+}
+
+.optionCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.optionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.optionCard.selected {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+.optionCard.current {
+  border-color: #10B981;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.allocationBar {
+  transition: width 0.5s ease-out;
+}
+
+.confidenceIndicator {
+  transition: width 0.3s ease-out;
+}
+
+.rankBadge {
+  transition: all 0.2s ease-in-out;
+}
+
+.rankBadge.first {
+  background: linear-gradient(135deg, #FEF3C7, #F59E0B);
+  color: #92400E;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.rankBadge.second {
+  background: linear-gradient(135deg, #F3F4F6, #6B7280);
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+}
+
+.rankBadge.third {
+  background: linear-gradient(135deg, #FED7AA, #EA580C);
+  color: #9A3412;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+
+.algorithmBadge {
+  transition: all 0.2s ease-in-out;
+}
+
+.algorithmBadge:hover {
+  transform: translateY(-1px);
+}
+
+.riskBadge {
+  transition: all 0.2s ease-in-out;
+}
+
+.riskLow {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.riskMedium {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.riskHigh {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.modal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modalOverlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.swipeContainer {
+  position: relative;
+  overflow: hidden;
+}
+
+.swipeWrapper {
+  display: flex;
+  transition: transform 0.3s ease-out;
+  touch-action: pan-x;
+}
+
+.swipeItem {
+  flex: 0 0 100%;
+  padding: 0 8px;
+}
+
+.swipeIndicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.swipeIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #D1D5DB;
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.swipeIndicator.active {
+  background-color: #3B82F6;
+}
+
+.swipeNavButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+}
+
+.swipeNavButton:hover {
+  background-color: #F9FAFB;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.swipeNavButton.prev {
+  left: -20px;
+}
+
+.swipeNavButton.next {
+  right: -20px;
+}
+
+.fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .explorerContainer {
+    padding: 12px;
+  }
+  
+  .optionCard {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .optionCard button {
+    min-height: 44px; /* Touch-friendly */
+    min-width: 44px;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .swipeContainer {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+  
+  .swipeItem {
+    padding: 0 4px;
+  }
+  
+  .swipeNavButton {
+    display: none; /* Hide nav buttons on mobile, use swipe instead */
+  }
+  
+  .modal {
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 90vh;
+    animation: modalSlideUp 0.3s ease-out;
+  }
+  
+  .modalContent {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .allocationVisualization {
+    padding: 12px;
+  }
+  
+  .allocationBar {
+    height: 8px;
+  }
+  
+  .confidenceIndicator {
+    height: 6px;
+  }
+  
+  .algorithmBadge,
+  .riskBadge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  
+  .rankBadge {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .summaryGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .sortControls {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .headerControls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .optionCard {
+    padding: 16px;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .swipeNavButton {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .modal {
+    max-width: 90vw;
+    max-height: 85vh;
+  }
+  
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Large tablet and small desktop */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .optionCard button,
+  .algorithmBadge,
+  .swipeIndicator {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .optionCard:hover {
+    transform: none;
+  }
+  
+  .optionCard:active {
+    transform: scale(0.98);
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+  
+  .algorithmBadge:hover,
+  .riskBadge:hover {
+    transform: none;
+  }
+  
+  .algorithmBadge:active {
+    transform: scale(0.95);
+  }
+  
+  .swipeIndicator {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .optionCard {
+    border-color: rgba(75, 85, 99, 0.3);
+    background-color: rgba(31, 41, 55, 1);
+  }
+  
+  .optionCard.current {
+    border-color: #10B981;
+    background-color: rgba(16, 185, 129, 0.1);
+  }
+  
+  .swipeNavButton {
+    background-color: rgba(31, 41, 55, 1);
+    border-color: rgba(75, 85, 99, 0.3);
+    color: #F9FAFB;
+  }
+  
+  .swipeNavButton:hover {
+    background-color: rgba(55, 65, 81, 1);
+  }
+  
+  .modal {
+    background-color: rgba(31, 41, 55, 1);
+  }
+  
+  .swipeIndicator {
+    background-color: rgba(75, 85, 99, 0.5);
+  }
+  
+  .swipeIndicator.active {
+    background-color: #3B82F6;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .optionCard {
+    border-width: 2px;
+  }
+  
+  .algorithmBadge,
+  .riskBadge {
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .swipeNavButton {
+    border-width: 2px;
+  }
+  
+  .swipeIndicator {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .optionCard,
+  .algorithmBadge,
+  .riskBadge,
+  .allocationBar,
+  .confidenceIndicator,
+  .swipeWrapper,
+  .modal,
+  .modalOverlay,
+  .fadeIn,
+  .slideUp,
+  .slideIn {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.optionCard:focus,
+.algorithmBadge:focus,
+.swipeIndicator:focus,
+.swipeNavButton:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .optionCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .swipeContainer {
+    overflow: visible;
+  }
+  
+  .swipeWrapper {
+    display: block;
+  }
+  
+  .swipeItem {
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  
+  .swipeNavButton,
+  .swipeIndicators {
+    display: none;
+  }
+  
+  .modal {
+    position: static;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lineClamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lineClamp3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

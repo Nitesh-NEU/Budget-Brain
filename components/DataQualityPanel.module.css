@@ -1,0 +1,568 @@
+/* DataQualityPanel Styles */
+
+.panelContainer {
+  position: relative;
+}
+
+.qualityCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.qualityCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.citationCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.citationCard:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.citationCard.valid {
+  border-left: 4px solid #10B981;
+}
+
+.citationCard.invalid {
+  border-left: 4px solid #EF4444;
+}
+
+.citationCard.warning {
+  border-left: 4px solid #F59E0B;
+}
+
+.citationCard.pending {
+  border-left: 4px solid #6B7280;
+}
+
+.expandedContent {
+  animation: slideDown 0.3s ease-out;
+}
+
+.severityBadge {
+  transition: all 0.2s ease-in-out;
+}
+
+.severityHigh {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.severityMedium {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.severityLow {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563EB;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.progressBar {
+  transition: width 0.5s ease-out;
+  border-radius: 9999px;
+}
+
+.progressBarHigh {
+  background-color: #EF4444;
+}
+
+.progressBarMedium {
+  background-color: #F59E0B;
+}
+
+.progressBarLow {
+  background-color: #10B981;
+}
+
+.deviationCard {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.reliabilityCard {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.warningCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.warningCard:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.statusIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.statusValid {
+  background-color: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.statusInvalid {
+  background-color: #EF4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.statusWarning {
+  background-color: #F59E0B;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.statusPending {
+  background-color: #6B7280;
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.qualityScore {
+  font-variant-numeric: tabular-nums;
+}
+
+.qualityScoreHigh {
+  color: #10B981;
+}
+
+.qualityScoreMedium {
+  color: #F59E0B;
+}
+
+.qualityScoreLow {
+  color: #EF4444;
+}
+
+.qualityScoreVeryLow {
+  color: #6B7280;
+}
+
+.fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.channelTag {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563EB;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.issuesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.issueItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #DC2626;
+}
+
+.issueItem::before {
+  content: "•";
+  margin-right: 6px;
+  color: #DC2626;
+}
+
+.expandButton {
+  transition: transform 0.2s ease-in-out;
+}
+
+.expandButton:hover {
+  transform: scale(1.05);
+}
+
+.expandButton.expanded {
+  transform: rotate(180deg);
+}
+
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.tooltipContainer:hover .tooltip {
+  opacity: 1;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+}
+
+.pulseAnimation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .panelContainer {
+    padding: 12px;
+  }
+  
+  .qualityCard {
+    padding: 12px;
+  }
+  
+  .citationCard {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .citationCard button {
+    min-height: 44px; /* Touch-friendly */
+  }
+  
+  .severityBadge {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+  
+  .progressBar {
+    height: 8px;
+  }
+  
+  .warningCard {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .expandedContent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .expandedContentOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  .citationGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .qualityScore {
+    font-size: 24px;
+  }
+  
+  .overallQuality {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .qualityCard {
+    padding: 16px;
+  }
+  
+  .citationCard {
+    padding: 16px;
+  }
+  
+  .citationGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .citationCard button,
+  .warningCard button,
+  .expandButton,
+  .toggleButton {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .citationCard:hover,
+  .warningCard:hover {
+    transform: none;
+  }
+  
+  .citationCard:active {
+    transform: scale(0.98);
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+  
+  .warningCard:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .qualityCard {
+    padding: 14px;
+  }
+  
+  .citationCard {
+    padding: 14px;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .qualityCard {
+    border-color: rgba(75, 85, 99, 0.3);
+    background-color: rgba(31, 41, 55, 1);
+  }
+  
+  .citationCard {
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+  
+  .citationCard.valid {
+    border-left-color: #10B981;
+    background-color: rgba(16, 185, 129, 0.05);
+  }
+  
+  .citationCard.invalid {
+    border-left-color: #EF4444;
+    background-color: rgba(239, 68, 68, 0.05);
+  }
+  
+  .citationCard.warning {
+    border-left-color: #F59E0B;
+    background-color: rgba(245, 158, 11, 0.05);
+  }
+  
+  .citationCard.pending {
+    border-left-color: #6B7280;
+    background-color: rgba(107, 114, 128, 0.05);
+  }
+  
+  .deviationCard {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  }
+  
+  .reliabilityCard {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  }
+  
+  .warningCard:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .tooltip {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #1F2937;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .qualityCard {
+    border-width: 2px;
+  }
+  
+  .citationCard {
+    border-width: 2px;
+  }
+  
+  .severityBadge {
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .statusIndicator {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .qualityCard,
+  .citationCard,
+  .warningCard,
+  .expandedContent,
+  .fadeIn,
+  .slideUp,
+  .progressBar,
+  .expandButton,
+  .loadingSpinner,
+  .pulseAnimation {
+    animation: none;
+    transition: none;
+  }
+  
+  .statusPending {
+    animation: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.citationCard:focus,
+.warningCard:focus,
+.expandButton:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .qualityCard,
+  .citationCard,
+  .warningCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .expandButton {
+    display: none;
+  }
+  
+  .expandedContent {
+    display: block !important;
+    animation: none;
+  }
+  
+  .tooltip {
+    display: none;
+  }
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Utility classes */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lineClamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lineClamp3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

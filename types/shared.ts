@@ -1,4 +1,6 @@
 
+import type { OptimizationPipeline } from './pipeline';
+
 export type Channel = "google" | "meta" | "tiktok" | "linkedin";
 
 export type Priors = {
@@ -83,4 +85,9 @@ export type EnhancedModelResult = ModelResult & {
     topAllocations: Allocation[];
     reasoningExplanation: string;
   };
+  pipeline?: OptimizationPipeline;
+  timing?: Record<string, number>;
+  algorithmDetails?: Record<string, any>;
 };
+// Re-export pipeline types for convenience
+export * from './pipeline';

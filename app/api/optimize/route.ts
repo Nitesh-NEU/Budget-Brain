@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { OptimizeBodySchema } from "@/lib/zod";
 import { optimize } from "@/lib/optimizer";
 import { AccuracyEnhancementService } from "@/lib/accuracyEnhancementService";
+import { PipelineManager } from "@/lib/pipelineManager";
+import type { OptimizationPipeline } from "@/types/pipeline";
 
 // Global instance for performance monitoring and caching
 let globalEnhancementService: AccuracyEnhancementService | null = null;
@@ -159,7 +161,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      message: "Optimization API - Performance Monitoring",
+      message: "Optimization API - Performance Monitoring & Pipeline Visualization",
       availableActions: [
         "stats - Get performance and cache statistics",
         "clear-cache - Clear the optimization cache",
@@ -171,6 +173,11 @@ export async function GET(req: NextRequest) {
         "export-performance - Export all performance data",
         "reset-performance - Reset performance monitoring data"
       ],
+      pipelineFeatures: [
+        "pipeline=true/false - Include pipeline execution data (default: true)",
+        "timing=true/false - Include stage timing information (default: true)",
+        "algorithmDetails=true/false - Include detailed algorithm information (default: false)"
+      ],
       usage: {
         stats: "GET /api/optimize?action=stats",
         clearCache: "GET /api/optimize?action=clear-cache",
@@ -180,7 +187,8 @@ export async function GET(req: NextRequest) {
         performanceTrends: "GET /api/optimize?action=performance-trends&hours=24",
         configurePerformance: "GET /api/optimize?action=configure-performance&memoryUsageMB=200&averageResponseTimeMs=5000&errorRatePercent=5&cacheHitRatePercent=70&concurrentOperationsCount=8",
         exportPerformance: "GET /api/optimize?action=export-performance",
-        resetPerformance: "GET /api/optimize?action=reset-performance"
+        resetPerformance: "GET /api/optimize?action=reset-performance",
+        optimizeWithPipeline: "POST /api/optimize?pipeline=true&timing=true&algorithmDetails=true"
       }
     });
   } catch (e: any) {
@@ -250,6 +258,21 @@ export async function POST(req: NextRequest) {
       }
       if (enhancedResult.alternatives && includeAlternatives) {
         response.alternatives = enhancedResult.alternatives;
+      }
+
+      // Include pipeline data if requested (default: true)
+      if (searchParams.get('pipeline') !== 'false' && enhancedResult.pipeline) {
+        response.pipeline = enhancedResult.pipeline;
+      }
+      
+      // Include timing data if requested (default: true)
+      if (searchParams.get('timing') !== 'false' && enhancedResult.timing) {
+        response.timing = enhancedResult.timing;
+      }
+      
+      // Include algorithm details if requested (default: false for backward compatibility)
+      if (searchParams.get('algorithmDetails') === 'true' && enhancedResult.algorithmDetails) {
+        response.algorithmDetails = enhancedResult.algorithmDetails;
       }
 
       return NextResponse.json(response);

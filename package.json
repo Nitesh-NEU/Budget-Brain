@@ -24,12 +24,16 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.7.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.2.1",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "autoprefixer": "10.4.19",
     "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "next": "14.2.x",
     "postcss": "8.4.38",
     "react": "18.3.x",
