@@ -141,7 +141,7 @@ export function RealTimePipelineStatusDemo() {
       </div>
 
       {pipelineManager && currentPipelineId && (
-        <VisualizationProvider initialPipeline={pipelineManager.getPipeline()}>
+        <VisualizationProvider initialPipeline={pipelineManager.getPipeline() || undefined}>
           <RealTimePipelineStatus
             pipelineId={currentPipelineId}
             autoConnect={true}
@@ -189,7 +189,7 @@ export function RealTimePipelineStatusDemo() {
           <p className="text-sm text-yellow-700">
             The WebSocket endpoint is currently a placeholder. For production use, 
             you would need to implement a proper WebSocket server using libraries 
-            like 'ws' or integrate with a WebSocket service provider.
+            like &apos;ws&apos; or integrate with a WebSocket service provider.
           </p>
         </div>
       </div>

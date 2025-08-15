@@ -510,7 +510,7 @@ export default function HomePage() {
       return generateMockEnhancedData(allocation);
     }
     return enhancedResult;
-  }, [allocation, enhancedResult, detOutcome, p10, p50, p90, intervals, summary, citations, goal]);
+  }, [allocation, enhancedResult, detOutcome, p10, p50, p90, intervals, summary, citations, goal, generateMockEnhancedData]);
 
   return (
     <VisualizationProvider initialPipeline={pipeline || undefined}>

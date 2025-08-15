@@ -116,13 +116,6 @@ export class AccuracyEnhancementService {
     return this.pipelineManager;
   }
 
-  /**
-   * Gets the current pipeline state
-   */
-  getCurrentPipeline(): OptimizationPipeline {
-    return this.pipelineManager.getPipeline();
-  }
-
   constructor(config?: Partial<EnhancementConfig>) {
     this.gradientOptimizer = new GradientOptimizer();
     this.ensembleService = new EnsembleService();
@@ -384,7 +377,7 @@ export class AccuracyEnhancementService {
         // Add pipeline data to cached result
         return {
           ...cachedResult,
-          pipeline: this.pipelineManager.getPipeline(),
+          pipeline: this.pipelineManager.getPipeline() || undefined,
           timing: { total: Date.now() - startTime, fromCache: Date.now() - startTime }
         };
       }
@@ -585,7 +578,7 @@ export class AccuracyEnhancementService {
           warnings: allWarnings
         },
         alternatives,
-        pipeline: finalPipeline,
+        pipeline: finalPipeline || undefined,
         timing: stageTimings,
         algorithmDetails
       };
@@ -1569,7 +1562,7 @@ export class AccuracyEnhancementService {
   /**
    * Get current pipeline state
    */
-  public getCurrentPipeline(): OptimizationPipeline {
+  public getCurrentPipeline(): OptimizationPipeline | null {
     return this.pipelineManager.getPipeline();
   }
 
@@ -1584,6 +1577,7 @@ export class AccuracyEnhancementService {
    * Register pipeline event callback for real-time updates
    */
   public onPipelineEvent(callback: (event: any) => void): () => void {
-    return this.pipelineManager.onEvent(callback);
+    this.pipelineManager.on('update', callback);
+    return () => this.pipelineManager.off('update', callback);
   }
 }

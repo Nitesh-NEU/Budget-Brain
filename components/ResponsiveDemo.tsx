@@ -12,13 +12,14 @@ import { ConfidenceDashboard } from './ConfidenceDashboard';
 import { DataQualityPanel } from './DataQualityPanel';
 import { AlternativeOptionsExplorer } from './AlternativeOptionsExplorer';
 import { useResponsive } from '../lib/hooks/useResponsive';
+import { PipelineStageStatus } from '../types/pipeline';
 
 // Demo data
 const demoStages = [
   {
     id: 'data-fetch',
     name: 'Data Fetch',
-    status: 'completed' as const,
+    status: PipelineStageStatus.COMPLETED,
     progress: 100,
     duration: 1200,
     details: 'Successfully fetched benchmark data from multiple sources'
@@ -26,7 +27,7 @@ const demoStages = [
   {
     id: 'validation',
     name: 'Validation',
-    status: 'running' as const,
+    status: PipelineStageStatus.RUNNING,
     progress: 75,
     duration: 800,
     details: 'Validating data quality and consistency'
@@ -34,7 +35,7 @@ const demoStages = [
   {
     id: 'optimization',
     name: 'Optimization',
-    status: 'pending' as const,
+    status: PipelineStageStatus.PENDING,
     progress: 0,
     details: 'Waiting for validation to complete'
   }
@@ -106,18 +107,34 @@ const demoDataQuality = {
   ],
   benchmarkAnalysis: {
     deviationScore: 0.18,
-    channelDeviations: { google: 0.12, meta: 0.22, tiktok: 0.25, linkedin: 0.15 }
+    channelDeviations: { google: 0.12, meta: 0.22, tiktok: 0.25, linkedin: 0.15 },
+    warnings: [
+      {
+        type: 'benchmark_deviation',
+        message: 'TikTok allocation deviates significantly from industry standards',
+        severity: 'medium' as const,
+        channel: 'tiktok' as const
+      },
+      {
+        type: 'benchmark_variance',
+        message: 'Meta allocation shows moderate variance from benchmarks',
+        severity: 'low' as const,
+        channel: 'meta' as const
+      }
+    ]
   },
   warnings: [
     {
+      type: 'data_variance',
       message: 'TikTok data shows higher than expected variance',
       severity: 'medium' as const,
-      channel: 'tiktok'
+      channel: 'tiktok' as const
     },
     {
+      type: 'data_staleness',
       message: 'Meta benchmark data is 2 days old',
       severity: 'low' as const,
-      channel: 'meta'
+      channel: 'meta' as const
     }
   ],
   sourceQuality: {

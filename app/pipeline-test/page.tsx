@@ -392,7 +392,7 @@ export default function PipelineTestPage() {
             <h4 className="font-medium mb-2">Key Points</h4>
             <ul className="text-sm space-y-1 list-disc list-inside">
               <li>Bayesian and Gradient Optimization can start after Validation</li>
-              <li>They don't need to wait for Ensemble Optimization</li>
+              <li>They don&apos;t need to wait for Ensemble Optimization</li>
               <li>Multiple stages can run in parallel (optimization stages)</li>
               <li>Dependencies are properly managed by the stage manager</li>
               <li>Each stage progresses from Pending → Running → Completed</li>

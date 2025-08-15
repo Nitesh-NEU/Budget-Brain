@@ -110,7 +110,8 @@ export function autoProgressPipeline(pipeline: OptimizationPipeline): Optimizati
       
       // Update current stage if not set or if this is the first running stage
       if (!updatedPipeline.currentStage || 
-          updatedPipeline.stages[updatedPipeline.currentStage].status !== PipelineStageStatus.RUNNING) {
+          (updatedPipeline.currentStage in updatedPipeline.stages && 
+           updatedPipeline.stages[updatedPipeline.currentStage as keyof typeof updatedPipeline.stages].status !== PipelineStageStatus.RUNNING)) {
         updatedPipeline.currentStage = stageId;
       }
     }

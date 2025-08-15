@@ -292,7 +292,7 @@ export class PipelineManager extends EventEmitter {
     try {
       const context: StageExecutionContext = {
         stageId,
-        pipeline: this.getPipeline(),
+        pipeline: this.pipeline,
         previousStageResults: this.getPreviousStageResults(stageId)
       };
 

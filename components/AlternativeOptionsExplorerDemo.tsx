@@ -230,8 +230,8 @@ export const AlternativeOptionsExplorerDemo: React.FC = () => {
           <div>
             <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Interactive Features:</h4>
             <ul className="space-y-1">
-              <li>• Click "Details" to view full reasoning and methodology</li>
-              <li>• Click "Select" to choose an alternative allocation</li>
+              <li>• Click &quot;Details&quot; to view full reasoning and methodology</li>
+              <li>• Click &quot;Select&quot; to choose an alternative allocation</li>
               <li>• Sort options by confidence, performance, or risk level</li>
               <li>• Toggle between showing top options or all alternatives</li>
             </ul>

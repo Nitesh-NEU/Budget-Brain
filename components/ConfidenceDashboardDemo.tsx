@@ -214,7 +214,7 @@ export const ConfidenceDashboardDemo: React.FC = () => {
             <ul className="space-y-1 list-disc list-inside">
               <li>Click algorithm badges to view detailed metrics</li>
               <li>Expand channel cards to see additional information</li>
-              <li>Toggle "Show Details" to control information density</li>
+              <li>Toggle &quot;Show Details&quot; to control information density</li>
               <li>Switch scenarios to see different confidence levels</li>
               <li>Observe color coding: green (high), yellow (medium), red (low)</li>
             </ul>
