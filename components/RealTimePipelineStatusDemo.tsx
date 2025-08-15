@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { VisualizationProvider } from '@/lib/visualizationContext';
 import { RealTimePipelineStatus } from './RealTimePipelineStatus';
 import { PipelineManager } from '@/lib/pipelineManager';
-import { PipelineStageStatus } from '@/types/pipeline';
+import { PipelineStageStatus, StageId } from '@/types/pipeline';
 import { createOptimizationPipeline } from '@/lib/pipelineUtils';
 
 export function RealTimePipelineStatusDemo() {
@@ -26,7 +26,7 @@ export function RealTimePipelineStatusDemo() {
 
     setIsSimulating(true);
 
-    const stages = [
+    const stages: StageId[] = [
       'dataFetch',
       'validation', 
       'ensembleOptimization',
